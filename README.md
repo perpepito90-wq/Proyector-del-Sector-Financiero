@@ -52,21 +52,16 @@ Los reportes se generan a partir de plantillas predefinidas (Completo, Diario y 
 - [.NET 7 SDK](https://dotnet.microsoft.com/download/dotnet/7.0)
 - SQL Server (Express, LocalDB o completo)
 - Visual Studio 2022 (recomendado)
-- Git
 
 ## Instalación
 
-1. Clona el repositorio:
-
-   ```bash
-   git clone https://github.com/perpepito90-wq/Proyector-del-Sector-Financiero.git
-   ```
+1. Descarga el proyecto en formato **.zip** y descomprímelo en una carpeta.
 
 2. Abre la solución `SistemaBancarioCore.sln` en Visual Studio 2022.
 
-3. Restaura los paquetes NuGet (Visual Studio lo hace automáticamente al abrir o compilar; incluye **ClosedXML**). Si prefieres hacerlo por consola:
+3. Al abrir la solución, Visual Studio restaura automáticamente los paquetes NuGet (incluye **ClosedXML**). Si prefieres hacerlo a mano, en la Consola del Administrador de paquetes:
 
-   ```bash
+   ```
    dotnet restore
    ```
 
