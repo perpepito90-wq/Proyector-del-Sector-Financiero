@@ -1,6 +1,6 @@
 # Sistema Bancario Core
 
-Proyecto académico del sector financiero. Plantea el desarrollo del núcleo (core) de un sistema bancario y, por etapas, implementa el módulo de acceso, un sistema de registro y auditoría centralizado, notificaciones multicanal, canales de atención y generación de reportes, aplicando cuatro patrones de diseño creacionales: **Singleton**, **Factory Method**, **Abstract Factory** y **Builder**.
+Proyecto académico del sector financiero. Plantea el desarrollo del núcleo (core) de un sistema bancario y, por etapas, implementa el módulo de acceso, un sistema de registro y auditoría centralizado, notificaciones multicanal, canales de atención y generación de reportes, aplicando cinco patrones de diseño creacionales: **Singleton**, **Factory Method**, **Abstract Factory**, **Builder** y **Prototype**.
 
 ## Acerca del proyecto
 
@@ -12,7 +12,7 @@ En esta etapa el desarrollo se concentra en:
 - Un registro de eventos y auditoría centralizado, que es la base del control de seguridad y del cumplimiento.
 - Notificaciones a los clientes por distintos canales (correo real por SMTP, SMS, push e interno).
 - Canales de atención (web, móvil, cajero y sucursal), cada uno con su propio formato de mensaje.
-- Generación de reportes de auditoría descargables en Excel.
+- Generación de reportes de auditoría a partir de plantillas, descargables en Excel.
 
 Las demás funciones del banco (cuentas, transacciones, préstamos, inversiones y detección de fraude) forman parte del alcance conceptual del sistema y quedan planteadas como proyección a futuro.
 
@@ -32,7 +32,11 @@ Una fábrica abstracta `ICanalFactory` crea familias coherentes de piezas por ca
 
 ### Builder — Reportes de auditoría
 
-Construye un objeto complejo (el reporte) por partes: encabezado, período, filtro por usuario, resumen, lista de eventos y nota legal. Usa un builder con interfaz fluida y un director con dos recetas (reporte rápido y completo). El reporte se genera a partir de la bitácora y se descarga en Excel.
+Construye un objeto complejo (el reporte) por partes: encabezado, período, filtro por usuario, resumen, lista de eventos y nota legal. Usa un builder con interfaz fluida y un director. Con el Builder se arman las plantillas de reporte que luego usa el Prototype.
+
+### Prototype — Plantillas de reporte
+
+Los reportes se generan a partir de plantillas predefinidas (Completo, Diario y Seguridad de accesos). Cada plantilla es un prototipo ya configurado que se **clona** (con copia profunda) y luego se rellena con los eventos y filtros elegidos, de modo que un reporte nunca modifica la plantilla original. Un registro de plantillas (Singleton) guarda los prototipos y entrega un clon con `ObtenerClon()`. Así se reutiliza la configuración y agregar una plantilla nueva es tan simple como registrarla una vez.
 
 ## Tecnologías
 
@@ -45,23 +49,36 @@ Construye un objeto complejo (el reporte) por partes: encabezado, período, filt
 
 ## Requisitos previos
 
-- .NET 7 SDK
+- [.NET 7 SDK](https://dotnet.microsoft.com/download/dotnet/7.0)
 - SQL Server (Express, LocalDB o completo)
 - Visual Studio 2022 (recomendado)
+- Git
 
-## Cómo ejecutarlo
+## Instalación
 
-1. Descarga o clona el repositorio y abre la solución `SistemaBancarioCore.sln`.
+1. Clona el repositorio:
 
-2. Restaura los paquetes NuGet (Visual Studio lo hace automáticamente al compilar; incluye **ClosedXML**).
+   ```bash
+   git clone https://github.com/perpepito90-wq/Proyector-del-Sector-Financiero.git
+   ```
 
-3. En `appsettings.json`, ajusta la cadena de conexión con el nombre de tu servidor de SQL Server:
+2. Abre la solución `SistemaBancarioCore.sln` en Visual Studio 2022.
+
+3. Restaura los paquetes NuGet (Visual Studio lo hace automáticamente al abrir o compilar; incluye **ClosedXML**). Si prefieres hacerlo por consola:
+
+   ```bash
+   dotnet restore
+   ```
+
+## Configuración y ejecución
+
+1. En `appsettings.json`, ajusta la cadena de conexión con el nombre de tu servidor de SQL Server:
 
    ```json
    "CadenaSQL": "Server=TU_SERVIDOR;Database=LoginDb;Trusted_Connection=True;MultipleActiveResultSets=true;Encrypt=false"
    ```
 
-4. Crea la base de datos ejecutando las migraciones. En la Consola del Administrador de paquetes de Visual Studio:
+2. Crea la base de datos ejecutando las migraciones. En la Consola del Administrador de paquetes de Visual Studio:
 
    ```
    Update-Database
@@ -69,7 +86,7 @@ Construye un objeto complejo (el reporte) por partes: encabezado, período, filt
 
    Esto crea la tabla de usuarios y la tabla de configuración de correo (`ConfiguracionesCorreo`).
 
-5. Ejecuta el proyecto (F5). La aplicación abre en la pantalla de inicio de sesión; desde ahí puedes registrar un usuario e ingresar.
+3. Ejecuta el proyecto (F5). La aplicación abre en la pantalla de inicio de sesión; desde ahí puedes registrar un usuario e ingresar.
 
 > **Envío de correos (opcional):** para que las notificaciones lleguen de verdad, entra a la página **Configuración de correo** dentro de la aplicación y define el servidor SMTP, el correo remitente y la contraseña de aplicación. Si no se configura, el resto del sistema funciona igual y el envío simplemente no se realiza.
 
@@ -85,7 +102,7 @@ SistemaBancarioCore/
 │   ├── Logger.cs            Registro y auditoría centralizados (Singleton)
 │   ├── Notificaciones/      Notificadores por canal (Factory Method)
 │   ├── Canales/             Canales de atención (Abstract Factory)
-│   ├── Reportes/            Reportes de auditoría y export a Excel (Builder)
+│   ├── Reportes/            Reportes, plantillas y export a Excel (Builder y Prototype)
 │   └── ...                  Servicios de usuario y de archivos
 ├── Views/            Vistas Razor (Login, Home, ConfiguracionCorreo, Canales, Reportes)
 ├── Migrations/       Migraciones de Entity Framework
@@ -100,3 +117,4 @@ SistemaBancarioCore/
 - **Semana 3 – Patrón Factory Method:** notificaciones por distintos canales.
 - **Semana 4 – Patrón Abstract Factory:** familias de piezas por canal de atención.
 - **Semana 5 – Patrón Builder:** construcción de reportes de auditoría.
+- **Semana 6 – Patrón Prototype:** plantillas de reporte clonables.
