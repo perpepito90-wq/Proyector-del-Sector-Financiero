@@ -1,10 +1,10 @@
 # Sistema Bancario Core
 
-Proyecto académico del sector financiero. Plantea el desarrollo del núcleo (core) de un sistema bancario y, a lo largo del curso, aplica **veintidós patrones de diseño GoF** —cinco creacionales, siete estructurales y diez de comportamiento— integrados en módulos reales del sistema, cada uno con su página en la aplicación.
+Proyecto académico del sector financiero. Plantea el desarrollo del núcleo (core) de un sistema bancario y, a lo largo del curso, aplica **veintiún patrones de diseño GoF** —cinco creacionales, siete estructurales y nueve de comportamiento— integrados en módulos reales del sistema, cada uno con su página en la aplicación.
 
 - **Creacionales:** **Singleton**, **Factory Method**, **Abstract Factory**, **Builder** y **Prototype**.
 - **Estructurales:** **Adapter**, **Bridge**, **Composite**, **Decorator** (dos aplicaciones), **Facade**, **Flyweight** y **Proxy**.
-- **De comportamiento:** **Iterator**, **Mediator**, **Memento**, **Observer**, **State**, **Visitor**, **Command**, **Strategy**, **Template Method** y **Chain of Responsibility**.
+- **De comportamiento:** **Iterator**, **Mediator**, **Memento**, **Observer**, **State**, **Visitor**, **Command**, **Strategy** y **Template Method**.
 
 ## Acerca del proyecto
 
@@ -15,7 +15,7 @@ A diferencia de las primeras etapas —en las que varias de estas funciones qued
 - Inicio de sesión y registro de usuarios (autenticación por cookies) y **control de acceso por rol** sobre operaciones sensibles (Proxy).
 - Un **registro de eventos y auditoría** centralizado, base del control de seguridad y del cumplimiento (Singleton).
 - **Gestión bancaria persistida**: cuentas, movimientos, préstamos e inversiones guardados en base de datos, con recálculo del saldo en cada movimiento.
-- **Detección de fraude en tiempo real**: cada transacción pasa por una cadena de reglas de riesgo antes de aplicarse, y puede aprobarse, marcarse para revisión o bloquearse (Chain of Responsibility).
+- **Detección de fraude en tiempo real**: cada transacción pasa por una lista de reglas de riesgo antes de aplicarse, y puede aprobarse, marcarse para revisión o bloquearse; estos controles se coordinan con el Facade (Operación segura).
 - **Cumplimiento regulatorio**: verificación de clientes (**KYC**) con evaluación de riesgo, y monitoreo de operaciones de alto valor y alertas (**AML**).
 - **Notificaciones** a los clientes por distintos canales (correo real por SMTP, SMS, push e interno).
 - **Canales de atención** (web, móvil, cajero y sucursal), cada uno con su propio formato de mensaje.
@@ -126,10 +126,6 @@ Encapsula los métodos de amortización (francés, alemán y cuota global) como 
 
 Define el esqueleto del proceso de apertura de un producto (validar, crear, registrar y notificar) en una clase base, y deja que cada tipo de producto redefina solo los pasos que cambian, manteniendo fijo el orden general.
 
-#### Chain of Responsibility — Detección de fraude
-
-La transacción recorre una cadena de reglas de riesgo (monto crítico, monto alto, frecuencia, monto inusual y horario). Cada regla suma puntaje y cualquiera puede cortar la cadena; según el puntaje final, la operación se aprueba, se marca para revisión o se bloquea, y la alerta queda registrada como evidencia. Las reglas están desacopladas, así que agregar, quitar o reordenar una no afecta a las demás ni al motor (`MotorFraude`).
-
 ## Módulos de la aplicación
 
 El sistema se navega desde un menú lateral, organizado por grupos. Los módulos son:
@@ -155,7 +151,7 @@ El sistema se navega desde un menú lateral, organizado por grupos. Los módulos
 | Operaciones | Solicitudes de crédito | State |
 | Operaciones | Ventanilla de caja | Command |
 | Operaciones | Simulador de crédito | Strategy |
-| Seguridad y cumplimiento | Detección de fraude | Chain of Responsibility |
+| Seguridad y cumplimiento | Detección de fraude | Reglas de riesgo + Facade |
 | Seguridad y cumplimiento | KYC — Clientes | Cumplimiento (KYC) |
 | Seguridad y cumplimiento | AML — Monitoreo | Cumplimiento (AML) |
 | Seguridad y cumplimiento | Auditoría | Decorator (reportes) + Singleton |
@@ -248,7 +244,7 @@ SistemaBancarioCore/
 │   ├── Caja/                Ventanilla de caja con comandos (Command)
 │   ├── Amortizacion/        Métodos de amortización (Strategy)
 │   ├── Apertura/            Proceso de apertura de productos (Template Method)
-│   ├── Fraude/              Cadena de reglas antifraude (Chain of Responsibility)
+│   ├── Fraude/              Reglas de evaluación de riesgo antifraude
 │   ├── Banca/               Persistencia de cuentas, movimientos, préstamos e inversiones (EF Core)
 │   ├── Cumplimiento/        Verificación de clientes (KYC) y monitoreo (AML)
 │   └── ...                  Servicios de usuario y de archivos
@@ -271,4 +267,4 @@ SistemaBancarioCore/
 - **Semana 9 – Patrón Decorator (profundización) y Facade:** reportes de auditoría decorados y centro de operaciones seguras.
 - **Semana 10 – Patrones Flyweight y Proxy:** catálogo de productos compartido y certificaciones con control de acceso y caché.
 - **Patrones de comportamiento:** Iterator (extracto de movimientos), Mediator (mesa de atención), Memento (parámetros operativos), Observer (alertas de cuenta), State (solicitudes de crédito), Visitor (portafolio), Command (ventanilla de caja), Strategy (simulador de amortización) y Template Method (apertura de productos).
-- **Etapa final – Integración y persistencia:** Chain of Responsibility para la detección de fraude en tiempo real, persistencia de los módulos de negocio en base de datos (cuentas, movimientos, préstamos e inversiones) y cumplimiento regulatorio KYC/AML con registro de clientes y monitoreo de operaciones.
+- **Etapa final – Integración y persistencia:** detección de fraude en tiempo real, persistencia de los módulos de negocio en base de datos (cuentas, movimientos, préstamos e inversiones) y cumplimiento regulatorio KYC/AML con registro de clientes y monitoreo de operaciones.
