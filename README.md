@@ -1,28 +1,33 @@
 # Sistema Bancario Core
 
-Proyecto académico del sector financiero. Plantea el desarrollo del núcleo (core) de un sistema bancario y, a lo largo de diez semanas, aplica **doce patrones de diseño GoF** —cinco creacionales y siete estructurales— integrados en módulos reales del sistema, cada uno con su página en la aplicación.
+Proyecto académico del sector financiero. Plantea el desarrollo del núcleo (core) de un sistema bancario y, a lo largo del curso, aplica **veintidós patrones de diseño GoF** —cinco creacionales, siete estructurales y diez de comportamiento— integrados en módulos reales del sistema, cada uno con su página en la aplicación.
 
 - **Creacionales:** **Singleton**, **Factory Method**, **Abstract Factory**, **Builder** y **Prototype**.
 - **Estructurales:** **Adapter**, **Bridge**, **Composite**, **Decorator** (dos aplicaciones), **Facade**, **Flyweight** y **Proxy**.
+- **De comportamiento:** **Iterator**, **Mediator**, **Memento**, **Observer**, **State**, **Visitor**, **Command**, **Strategy**, **Template Method** y **Chain of Responsibility**.
 
 ## Acerca del proyecto
 
 Un core bancario es el software sobre el que se apoyan todas las operaciones de un banco: gestión de cuentas, transacciones, préstamos e inversiones, operando a través de múltiples canales (web, móvil, cajeros y sucursales), con detección de fraude en tiempo real y cumplimiento regulatorio (KYC/AML).
 
-A diferencia de las primeras etapas —en las que varias de estas funciones quedaban planteadas como proyección a futuro—, en esta versión el sistema ya tiene **todos sus módulos operativos**:
+A diferencia de las primeras etapas —en las que varias de estas funciones quedaban planteadas como proyección a futuro—, en esta versión final el sistema ya tiene **todos sus módulos operativos** y, además, **los datos del negocio se guardan en una base de datos real** (SQL Server con Entity Framework Core) en lugar de vivir solo en memoria:
 
 - Inicio de sesión y registro de usuarios (autenticación por cookies) y **control de acceso por rol** sobre operaciones sensibles (Proxy).
 - Un **registro de eventos y auditoría** centralizado, base del control de seguridad y del cumplimiento (Singleton).
+- **Gestión bancaria persistida**: cuentas, movimientos, préstamos e inversiones guardados en base de datos, con recálculo del saldo en cada movimiento.
+- **Detección de fraude en tiempo real**: cada transacción pasa por una cadena de reglas de riesgo antes de aplicarse, y puede aprobarse, marcarse para revisión o bloquearse (Chain of Responsibility).
+- **Cumplimiento regulatorio**: verificación de clientes (**KYC**) con evaluación de riesgo, y monitoreo de operaciones de alto valor y alertas (**AML**).
 - **Notificaciones** a los clientes por distintos canales (correo real por SMTP, SMS, push e interno).
 - **Canales de atención** (web, móvil, cajero y sucursal), cada uno con su propio formato de mensaje.
 - **Reportes de auditoría** a partir de plantillas, descargables en Excel, y **reportes decorados** (encabezado, firma, marca de confidencialidad y observaciones).
-- **Gestión de cuentas**: catálogo de productos compartido entre miles de cuentas (Flyweight).
+- **Cartera de cuentas**: catálogo de productos compartido entre miles de cuentas (Flyweight).
 - **Transacciones**: pagos a través de pasarelas externas integradas con adaptadores (Adapter).
 - **Préstamos**: simulación del costo con cargos y descuentos combinables (Decorator).
 - **Estructura organizacional**: consolidado del banco por sucursales y cuentas (Composite).
 - **Documentos del cliente**: estados de cuenta y certificados en distintos formatos (Bridge).
 - **Operaciones seguras**: detección de fraude y cumplimiento KYC/AML coordinados tras una sola fachada (Facade).
 - **Certificaciones oficiales**: emisión costosa y sensible, con control de acceso, caché y creación diferida (Proxy).
+- **Atención y operación diaria**: mesa de atención (Mediator), alertas de saldo (Observer), ciclo de vida de las solicitudes de crédito (State), ventanilla de caja (Command), simulador de amortización (Strategy), operaciones del portafolio (Visitor), recorrido del extracto de movimientos (Iterator), apertura de productos (Template Method) y parámetros operativos con deshacer (Memento).
 
 La interfaz usa un **menú lateral** desde el que se accede a cada módulo, y un panel de inicio con tarjetas que enlazan a su página correspondiente.
 
@@ -83,24 +88,81 @@ Comparte objetos para ahorrar memoria cuando hay muchas instancias similares. El
 
 Coloca un intermediario (`CertificacionProxy`) con la misma interfaz que el servicio real, para controlar el acceso a una operación costosa y sensible (emitir una certificación oficial). Combina tres variantes: **protección** (verifica permisos por rol), **caché** (no regenera un documento ya emitido) y **virtual/lazy** (crea el servicio real solo cuando se necesita).
 
+### Patrones de comportamiento
+
+#### Iterator — Movimientos
+
+Recorre el extracto de movimientos de una cuenta sin exponer cómo está almacenado por dentro. Ofrece distintos recorridos (cronológico, por tipo, solo créditos o solo débitos) a través de una interfaz de iterador común, de modo que la vista pide los movimientos sin conocer la estructura interna.
+
+#### Mediator — Mesa de atención
+
+Centraliza la comunicación de la mesa de atención en un mediador (`IMediadorAtencion`): el cliente, el asesor y el supervisor no se comunican directamente entre sí, sino que envían sus mensajes al mediador, que coordina el flujo. Así se evita que cada parte dependa de las demás.
+
+#### Memento — Parámetros operativos
+
+Permite deshacer cambios en los parámetros operativos del banco guardando instantáneas de su estado. Un objeto memento captura la configuración antes de cada cambio y un "cuidador" conserva el historial, de modo que se puede volver a un estado anterior sin exponer los detalles internos del objeto.
+
+#### Observer — Alertas de cuenta
+
+Cuando cambia el saldo de una cuenta, el sujeto observado notifica automáticamente a los módulos suscritos (alertas, auditoría, etc.). Agregar un nuevo interesado es registrar un observador más, sin tocar la lógica de la cuenta.
+
+#### State — Solicitudes de crédito
+
+Modela el ciclo de vida de una solicitud de crédito (radicada, en evaluación, aprobada, rechazada, desembolsada). Cada estado es una clase que define qué acciones son válidas y a qué estado se puede pasar, evitando un condicional gigante repartido por el código.
+
+#### Visitor — Portafolio
+
+Permite agregar operaciones nuevas sobre los productos del portafolio (valorización, proyección, resumen) sin modificar las clases de los productos. Cada operación es un "visitante" que recorre el portafolio y actúa sobre cada tipo de producto.
+
+#### Command — Ventanilla de caja
+
+Encapsula cada operación de caja (depósito, retiro, transferencia) como un objeto `IComando`, lo que permite encolarlas, ejecutarlas de forma uniforme y deshacer la última realizada.
+
+#### Strategy — Simulador de crédito
+
+Encapsula los métodos de amortización (francés, alemán y cuota global) como estrategias intercambiables. El simulador elige la estrategia en tiempo de ejecución, y agregar un método nuevo no cambia el código que lo usa.
+
+#### Template Method — Apertura de productos
+
+Define el esqueleto del proceso de apertura de un producto (validar, crear, registrar y notificar) en una clase base, y deja que cada tipo de producto redefina solo los pasos que cambian, manteniendo fijo el orden general.
+
+#### Chain of Responsibility — Detección de fraude
+
+La transacción recorre una cadena de reglas de riesgo (monto crítico, monto alto, frecuencia, monto inusual y horario). Cada regla suma puntaje y cualquiera puede cortar la cadena; según el puntaje final, la operación se aprueba, se marca para revisión o se bloquea, y la alerta queda registrada como evidencia. Las reglas están desacopladas, así que agregar, quitar o reordenar una no afecta a las demás ni al motor (`MotorFraude`).
+
 ## Módulos de la aplicación
 
-El sistema se navega desde un menú lateral. Los principales módulos son:
+El sistema se navega desde un menú lateral, organizado por grupos. Los módulos son:
 
-| Módulo (página)        | Patrón principal            |
-|------------------------|-----------------------------|
-| Panel                  | —                           |
-| Cartera de cuentas     | Flyweight                   |
-| Estructura             | Composite                   |
-| Préstamos              | Decorator                   |
-| Documentos             | Bridge                      |
-| Transacciones          | Adapter                     |
-| Canales de atención    | Abstract Factory            |
-| Operación segura       | Facade                      |
-| Auditoría              | Decorator (reportes) + Singleton |
-| Reportes               | Builder + Prototype         |
-| Certificaciones        | Proxy                       |
-| Configuración de correo| Factory Method (SMTP)       |
+| Grupo | Módulo (página) | Patrón principal |
+|-------|-----------------|------------------|
+| — | Panel | — |
+| Banca (base de datos) | Gestión de cuentas | Persistencia (EF Core) |
+| Banca (base de datos) | Gestión de préstamos | Persistencia (EF Core) |
+| Banca (base de datos) | Gestión de inversiones | Persistencia (EF Core) |
+| Cuentas y productos | Cartera de cuentas | Flyweight |
+| Cuentas y productos | Movimientos | Iterator |
+| Cuentas y productos | Portafolio | Visitor |
+| Cuentas y productos | Apertura de productos | Template Method |
+| Cuentas y productos | Estructura | Composite |
+| Cuentas y productos | Préstamos | Decorator |
+| Cuentas y productos | Documentos | Bridge |
+| Operaciones | Transacciones | Adapter |
+| Operaciones | Canales de atención | Abstract Factory |
+| Operaciones | Operación segura | Facade |
+| Operaciones | Mesa de atención | Mediator |
+| Operaciones | Alertas de cuenta | Observer |
+| Operaciones | Solicitudes de crédito | State |
+| Operaciones | Ventanilla de caja | Command |
+| Operaciones | Simulador de crédito | Strategy |
+| Seguridad y cumplimiento | Detección de fraude | Chain of Responsibility |
+| Seguridad y cumplimiento | KYC — Clientes | Cumplimiento (KYC) |
+| Seguridad y cumplimiento | AML — Monitoreo | Cumplimiento (AML) |
+| Seguridad y cumplimiento | Auditoría | Decorator (reportes) + Singleton |
+| Seguridad y cumplimiento | Reportes | Builder + Prototype |
+| Seguridad y cumplimiento | Certificaciones | Proxy |
+| Sistema | Parámetros operativos | Memento |
+| Sistema | Configuración de correo | Factory Method (SMTP) |
 
 ## Tecnologías
 
@@ -144,7 +206,7 @@ El sistema se navega desde un menú lateral. Los principales módulos son:
    Update-Database
    ```
 
-   Esto crea la tabla de usuarios y la tabla de configuración de correo (`ConfiguracionesCorreo`).
+   Esto crea todas las tablas del sistema: usuarios y configuración de correo (`ConfiguracionesCorreo`), las de la gestión bancaria (`Cuentas`, `Movimientos`, `Prestamos`, `Inversiones`), las alertas de fraude (`AlertasFraude`) y los clientes del proceso KYC (`Clientes`). Algunas vienen con datos de ejemplo para poder probar de inmediato.
 
 3. Ejecuta el proyecto (F5). La aplicación abre en la pantalla de inicio de sesión; desde ahí puedes registrar un usuario e ingresar. Tras iniciar sesión, el menú lateral da acceso a todos los módulos.
 
@@ -156,10 +218,14 @@ Los registros de la aplicación se guardan en `bin/Debug/net7.0/Logs/`, en un ar
 
 ```
 SistemaBancarioCore/
-├── Controllers/      Login, Home, ConfiguracionCorreo, Canales, Reportes,
-│                     Pagos, Documentos, Estructura, Prestamos, Auditoria,
-│                     Operaciones, Cartera y Certificaciones
-├── Models/           Usuario, ConfiguracionCorreo y contexto de base de datos
+├── Controllers/      Login, Home, ConfiguracionCorreo, Canales, Reportes, Pagos,
+│                     Documentos, Estructura, Prestamos, Auditoria, Operaciones,
+│                     Cartera, Certificaciones, Movimientos, Atencion, Parametros,
+│                     Alertas, Creditos, Portafolio, Caja, Amortizacion, Apertura,
+│                     CuentasBanco, PrestamosBanco, InversionesBanco, Fraude, Kyc y Aml
+├── Models/           Usuario, ConfiguracionCorreo, Cuenta, MovimientoBancario,
+│                     PrestamoBancario, Inversion, AlertaFraude, Cliente y el
+│                     contexto de base de datos
 ├── Services/
 │   ├── Logger.cs            Registro y auditoría centralizados (Singleton)
 │   ├── Notificaciones/      Notificadores por canal (Factory Method)
@@ -173,6 +239,18 @@ SistemaBancarioCore/
 │   ├── Operaciones/         Centro de operaciones: fraude, KYC/AML, límites (Facade)
 │   ├── Cuentas/             Catálogo de productos y cartera de cuentas (Flyweight)
 │   ├── Certificaciones/     Emisión de certificaciones con proxy (Proxy)
+│   ├── Movimientos/         Recorrido del extracto de movimientos (Iterator)
+│   ├── Atencion/            Mesa de atención al cliente (Mediator)
+│   ├── Parametros/          Parámetros operativos con deshacer (Memento)
+│   ├── Alertas/             Alertas de saldo de cuenta (Observer)
+│   ├── Creditos/            Ciclo de vida de solicitudes de crédito (State)
+│   ├── Portafolio/          Operaciones sobre el portafolio (Visitor)
+│   ├── Caja/                Ventanilla de caja con comandos (Command)
+│   ├── Amortizacion/        Métodos de amortización (Strategy)
+│   ├── Apertura/            Proceso de apertura de productos (Template Method)
+│   ├── Fraude/              Cadena de reglas antifraude (Chain of Responsibility)
+│   ├── Banca/               Persistencia de cuentas, movimientos, préstamos e inversiones (EF Core)
+│   ├── Cumplimiento/        Verificación de clientes (KYC) y monitoreo (AML)
 │   └── ...                  Servicios de usuario y de archivos
 ├── Views/            Vistas Razor (una por módulo) y el layout con menú lateral
 ├── Migrations/       Migraciones de Entity Framework
@@ -192,3 +270,5 @@ SistemaBancarioCore/
 - **Semana 8 – Patrones Composite y Decorator:** estructura organizacional y costos de préstamo combinables.
 - **Semana 9 – Patrón Decorator (profundización) y Facade:** reportes de auditoría decorados y centro de operaciones seguras.
 - **Semana 10 – Patrones Flyweight y Proxy:** catálogo de productos compartido y certificaciones con control de acceso y caché.
+- **Patrones de comportamiento:** Iterator (extracto de movimientos), Mediator (mesa de atención), Memento (parámetros operativos), Observer (alertas de cuenta), State (solicitudes de crédito), Visitor (portafolio), Command (ventanilla de caja), Strategy (simulador de amortización) y Template Method (apertura de productos).
+- **Etapa final – Integración y persistencia:** Chain of Responsibility para la detección de fraude en tiempo real, persistencia de los módulos de negocio en base de datos (cuentas, movimientos, préstamos e inversiones) y cumplimiento regulatorio KYC/AML con registro de clientes y monitoreo de operaciones.
